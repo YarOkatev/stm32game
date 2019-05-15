@@ -56,7 +56,7 @@ OPENOCD=openocd
 MCUFLAGS = -mcpu=cortex-m0 -mlittle-endian -mfloat-abi=soft -mthumb \
            -mno-unaligned-access
 
-DEBUG_OPTIMIZE_FLAGS = -O0 -ggdb -gdwarf-2
+DEBUG_OPTIMIZE_FLAGS = -O3 -ggdb -gdwarf-2 -finline-functions
 
 CFLAGS = -Wall -Wextra --pedantic
 CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib \

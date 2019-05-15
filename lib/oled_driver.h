@@ -21,6 +21,7 @@ enum color_t {
     clWhite = 0xFF
 };
 
+
 /*
  * initialize display
  */

@@ -5,17 +5,17 @@
 #include "stm32f0xx_ll_i2c.h"
 
 #include "oled_driver.h"
-// #include "game.h"
 #include <string.h>
 
 
 static uint8_t gmem[GMEM_SIZE] = {0};
 static uint8_t curX = 0;
 static uint8_t curY = 0;
+int8_t deltaY = 0;
 
 extern font_desc_t font_desc;
 
-uint8_t SPEED = 2;
+uint8_t SPEED = 3;
 
 void drawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, enum color_t c) {
 	int16_t dx, dy, sx, sy, err, e2, i, tmp;
@@ -236,23 +236,23 @@ static uint8_t oled_cmd_send(uint8_t byte)
      * Initiate transmission
      * Display address = 0x78
      */
-    LL_I2C_HandleTransfer(I2C1, 0x78, LL_I2C_ADDRSLAVE_7BIT,
+    LL_I2C_HandleTransfer(I2C2, 0x78, LL_I2C_ADDRSLAVE_7BIT,
                           2, LL_I2C_MODE_AUTOEND,
                           LL_I2C_GENERATE_START_WRITE);
     /*
      * Send Control byte (Co = 0, D/C# = 0)
      */
-    while (!LL_I2C_IsActiveFlag_TXIS(I2C1));
-    LL_I2C_TransmitData8(I2C1, 0x00);
+    while (!LL_I2C_IsActiveFlag_TXIS(I2C2));
+    LL_I2C_TransmitData8(I2C2, 0x00);
     /*
      * Send cmd
      */
-    while (!LL_I2C_IsActiveFlag_TXIS(I2C1));
-    LL_I2C_TransmitData8(I2C1, byte);
+    while (!LL_I2C_IsActiveFlag_TXIS(I2C2));
+    LL_I2C_TransmitData8(I2C2, byte);
     /*
      * Check for end of transmission
      */
-    while (LL_I2C_IsActiveFlag_TC(I2C1));
+    while (LL_I2C_IsActiveFlag_TC(I2C2));
     return 0;
 }
 
@@ -264,25 +264,25 @@ static uint8_t oled_data_send(uint8_t *byte, uint8_t size)
      * Initiate transmission
      * Display address = 0x78
      */
-    LL_I2C_HandleTransfer(I2C1, 0x78, LL_I2C_ADDRSLAVE_7BIT,
+    LL_I2C_HandleTransfer(I2C2, 0x78, LL_I2C_ADDRSLAVE_7BIT,
                           size + 1, LL_I2C_MODE_AUTOEND,
                           LL_I2C_GENERATE_START_WRITE);
     /*
      * Send Control byte (Co = 0, D/C# = 1)
      */
-    while (!LL_I2C_IsActiveFlag_TXIS(I2C1));
-    LL_I2C_TransmitData8(I2C1, 0x40);
+    while (!LL_I2C_IsActiveFlag_TXIS(I2C2));
+    LL_I2C_TransmitData8(I2C2, 0x40);
     /*
      * Send data
      */
     for (i = 0; i < size; i++) {
-        while (!LL_I2C_IsActiveFlag_TXIS(I2C1));
-        LL_I2C_TransmitData8(I2C1, byte[i]);
+        while (!LL_I2C_IsActiveFlag_TXIS(I2C2));
+        LL_I2C_TransmitData8(I2C2, byte[i]);
     }
     /*
      * Check for end of transmission
      */
-    while (LL_I2C_IsActiveFlag_TC(I2C1));
+    while (LL_I2C_IsActiveFlag_TC(I2C2));
     return 0;
 }
 
@@ -418,7 +418,7 @@ void oled_config(void)
     oled_cmd_send(0x10);
 
     // Vertical flip: 0xC0 - on, 0xC8 - off
-    oled_cmd_send(0xC0); //c0
+    oled_cmd_send(0xC8); //c0
 
     // Set start line address 0-63
     oled_cmd_send(0x40);
@@ -428,7 +428,7 @@ void oled_config(void)
     oled_cmd_send(0xFF);
 
     // Horizontal flip: 0xA1 - on, 0xA0 - off
-    oled_cmd_send(0xA1); //a1
+    oled_cmd_send(0xA0); //a1
 
     // Normal colo - 0xA6, Inverse - 0xA7
     oled_cmd_send(0xA6);
@@ -467,7 +467,7 @@ void oled_config(void)
 
 void oledSetPix(int16_t x, int16_t y, enum color_t color)
 {
-    if (x >= GMEM_WIDTH || y >= GMEM_HEIGHT)
+    if (x >= GMEM_WIDTH || y >= GMEM_HEIGHT || x < 0 || y < 0)
         return;
 
     if (color != clBlack)
@@ -497,25 +497,57 @@ void oled_putc(char ch)
      * Thereby, we must implement both of them
      */
     if (ch == '\n') {
-        curY++;
+        curX++;
         return;
     }
 
     if (ch == '\r') {
-        curX = 0;
+        curY = 0;
         return;
     }
 
     for (j = 0; j < font_desc.height; j++) {
         for (i = 0; i < font_desc.width; i++) {
             color = font_desc.get_pix(ch, i, j);
-            oledSetPix(curX * (font_desc.width + 1) + i,
-                         curY * (font_desc.height + 2) + j, color);
+            oledSetPix(curX * (font_desc.height + 2) + j,
+                         curY * (font_desc.width + 1) + i + deltaY, color);
         }
     }
-    curX++;
+    curY++;
     return;
 }
+
+// void oled_putc(char ch)
+// {
+//     uint8_t i, j;
+//     uint8_t color;
+//
+//     /*
+//      * NOTE: historically \r and \n are used together
+//      * in many instances as \r is used to move the carriage back
+//      * to the left side of terminal, \n moves the carriage down
+//      * Thereby, we must implement both of them
+//      */
+//     if (ch == '\n') {
+//         curY++;
+//         return;
+//     }
+//
+//     if (ch == '\r') {
+//         curX = 0;
+//         return;
+//     }
+//
+//     for (j = 0; j < font_desc.height; j++) {
+//         for (i = 0; i < font_desc.width; i++) {
+//             color = font_desc.get_pix(ch, i, j);
+//             oledSetPix(curX * (font_desc.width + 1) + i,
+//                          curY * (font_desc.height + 2) + j, color);
+//         }
+//     }
+//     curX++;
+//     return;
+// }
 
 /*
  * Additional functionality
@@ -532,7 +564,7 @@ void oledPic (const uint8_t *im, uint8_t thrsh)
      */
     for (j = 0; j < GMEM_HEIGHT; j++) {
         for (i = 0; i < GMEM_WIDTH; i++) {
-            oledSetPix(i, j, im[j * GMEM_WIDTH + i] > thrsh);
+            oledSetPix(i, j, im[j * GMEM_WIDTH + i] < thrsh);
         }
     }
     return;
@@ -545,39 +577,39 @@ void oled_hw_config(void)
      */
     // SCL - GPIOB6
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_6,
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_10,
                        LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_6,
+    LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_10,
                              LL_GPIO_OUTPUT_OPENDRAIN);
-    LL_GPIO_SetAFPin_0_7(GPIOB, LL_GPIO_PIN_6, LL_GPIO_AF_1);
-    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_6,
+    LL_GPIO_SetAFPin_8_15(GPIOB, LL_GPIO_PIN_10, LL_GPIO_AF_1);
+    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_10,
                         LL_GPIO_SPEED_FREQ_HIGH);
 
     // SDA - GPIOB7
-    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_7,
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_11,
                        LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_7,
+    LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_11,
                              LL_GPIO_OUTPUT_OPENDRAIN);
-    LL_GPIO_SetAFPin_0_7(GPIOB, LL_GPIO_PIN_7, LL_GPIO_AF_1);
-    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_7,
+    LL_GPIO_SetAFPin_8_15(GPIOB, LL_GPIO_PIN_11, LL_GPIO_AF_1);
+    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_11,
                         LL_GPIO_SPEED_FREQ_HIGH);
     /*
      * Clock on the I2C peripheral and set it up
      */
     LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_SYSCLK);
-    LL_I2C_Disable(I2C1);
-    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C1);
-    LL_I2C_DisableAnalogFilter(I2C1);
-    LL_I2C_SetDigitalFilter(I2C1, 1);
+    LL_I2C_Disable(I2C2);
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C2);
+    LL_I2C_DisableAnalogFilter(I2C2);
+    LL_I2C_SetDigitalFilter(I2C2, 1);
     /*
      * Set I2C speed to 400 kHz, for further details refer
      * to lecture
      */
-    LL_I2C_SetTiming(I2C1, 0x50330309);
-    LL_I2C_DisableClockStretching(I2C1);
-    LL_I2C_SetMasterAddressingMode(I2C1, LL_I2C_ADDRESSING_MODE_7BIT);
-    LL_I2C_SetMode(I2C1, LL_I2C_MODE_I2C);
-    LL_I2C_Enable(I2C1);
+    LL_I2C_SetTiming(I2C2, 0x50330309);
+    LL_I2C_DisableClockStretching(I2C2);
+    LL_I2C_SetMasterAddressingMode(I2C2, LL_I2C_ADDRESSING_MODE_7BIT);
+    LL_I2C_SetMode(I2C2, LL_I2C_MODE_I2C);
+    LL_I2C_Enable(I2C2);
 
     return;
 }
