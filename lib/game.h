@@ -66,6 +66,10 @@ void countdown();
 void startScreen();
 void pauseGame();
 void showCover();
+void buttonSound();
+void endSound();
+void countSound();
+void initializeAll();
 
 
 

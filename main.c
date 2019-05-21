@@ -2,13 +2,7 @@
 
 int main(void)
 {
-    rcc_config();
-    gpio_config();
-    oled_config();
-    printf_config();
-    timers_config();
-    exti_config();
-    systick_config();
+    initializeAll ();
 
     STATE = START_SCREEN;
 

@@ -11,11 +11,10 @@
 static uint8_t gmem[GMEM_SIZE] = {0};
 static uint8_t curX = 0;
 static uint8_t curY = 0;
-int8_t deltaY = 0;
+int8_t deltaY = 0; // offset for xprintf (putc)
 
 extern font_desc_t font_desc;
-
-uint8_t SPEED = 3;
+extern uint8_t SPEED;
 
 void drawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, enum color_t c) {
 	int16_t dx, dy, sx, sy, err, e2, i, tmp;
@@ -286,54 +285,19 @@ static uint8_t oled_data_send(uint8_t *byte, uint8_t size)
     return 0;
 }
 
+/*
+ * Fill all display with one color
+ */
+
 void oledColor (enum color_t color)
 {
     memset(gmem, color, GMEM_SIZE);
     return;
 }
 
-void oledFrame (void) {
-    static uint8_t offset = 0;
-    static uint16_t i;
-
-    offset += SPEED;
-    offset %= 12;
-
-    if (offset <= 4) {
-        memset(gmem + GMEM_WIDTH * 3, 0x0, offset);
-        memset(gmem + GMEM_WIDTH * 4, 0x0, offset);
-    } else {
-        memset(gmem + GMEM_WIDTH * 3, 0x01 << 7, offset - 4);
-        memset(gmem + GMEM_WIDTH * 3 + (offset - 4), 0x0, 4);
-        memset(gmem + GMEM_WIDTH * 4, 0x01, offset - 4);
-        memset(gmem + GMEM_WIDTH * 4 + (offset - 4), 0x0, 4);
-    }
-
-    i = offset;
-
-    for ( ; i < GMEM_WIDTH - 12; i += 12) {
-        memset(gmem + GMEM_WIDTH * 3 + i, 0x01 << 7, 8);
-        memset(gmem + GMEM_WIDTH * 3 + i + 8, 0x0, 4);
-        memset(gmem + GMEM_WIDTH * 4 + i, 0x01, 8);
-        memset(gmem + GMEM_WIDTH * 4 + i + 8, 0x0, 4);
-    }
-
-    if (offset > 7) {
-        memset(gmem + GMEM_WIDTH * 3 + i, 0x01 << 7, 8);
-        memset(gmem + GMEM_WIDTH * 4 + i, 0x01, 8);
-        memset(gmem + GMEM_WIDTH * 3 + i + 8, 0x0, GMEM_WIDTH - i - 8);
-        memset(gmem + GMEM_WIDTH * 4 + i + 8, 0x0, GMEM_WIDTH - i - 8);
-    } else {
-        memset(gmem + GMEM_WIDTH * 3 + i, 0x01 << 7, GMEM_WIDTH - i);
-        memset(gmem + GMEM_WIDTH * 4 + i, 0x01, GMEM_WIDTH - i);
-    }
-
-    memset(gmem + GMEM_WIDTH, 0x00, GMEM_WIDTH * 2);
-    memset(gmem + GMEM_WIDTH * 5, 0x00, GMEM_WIDTH * 2);
-    memset(gmem + GMEM_WIDTH * 7, 128, GMEM_WIDTH);
-    memset(gmem, 0x01, GMEM_WIDTH);
-    return;
-}
+/*
+ * It draws the background of a given movement.
+ */
 
 void oledFrame2 (void) {
     static uint8_t offset = 0;
@@ -478,12 +442,16 @@ void oledSetPix(int16_t x, int16_t y, enum color_t color)
 }
 
 
-void oled_set_cursor(uint8_t x, uint8_t y)
+void oledSetCursor (uint8_t x, uint8_t y)
 {
     curX = x;
     curY = y;
     return;
 }
+
+/*
+ * OLED putc works correctly for vertical Display
+ */
 
 void oled_putc(char ch)
 {
@@ -496,6 +464,7 @@ void oled_putc(char ch)
      * to the left side of terminal, \n moves the carriage down
      * Thereby, we must implement both of them
      */
+
     if (ch == '\n') {
         curX++;
         return;
@@ -517,51 +486,16 @@ void oled_putc(char ch)
     return;
 }
 
-// void oled_putc(char ch)
-// {
-//     uint8_t i, j;
-//     uint8_t color;
-//
-//     /*
-//      * NOTE: historically \r and \n are used together
-//      * in many instances as \r is used to move the carriage back
-//      * to the left side of terminal, \n moves the carriage down
-//      * Thereby, we must implement both of them
-//      */
-//     if (ch == '\n') {
-//         curY++;
-//         return;
-//     }
-//
-//     if (ch == '\r') {
-//         curX = 0;
-//         return;
-//     }
-//
-//     for (j = 0; j < font_desc.height; j++) {
-//         for (i = 0; i < font_desc.width; i++) {
-//             color = font_desc.get_pix(ch, i, j);
-//             oledSetPix(curX * (font_desc.width + 1) + i,
-//                          curY * (font_desc.height + 2) + j, color);
-//         }
-//     }
-//     curX++;
-//     return;
-// }
-
-/*
- * Additional functionality
- */
-
 void oledPic (const uint8_t *im, uint8_t thrsh)
 {
     uint8_t i, j;
 
     /*
-     * Render picture from im array:
+     * Render INVERTED (!!!) picture from im array:
      * if value is above thrsh then it is white
      * otherwise it is black
      */
+
     for (j = 0; j < GMEM_HEIGHT; j++) {
         for (i = 0; i < GMEM_WIDTH; i++) {
             oledSetPix(i, j, im[j * GMEM_WIDTH + i] < thrsh);
@@ -575,7 +509,7 @@ void oled_hw_config(void)
     /*
      * Clock on the I2C port and configure it
      */
-    // SCL - GPIOB6
+    // SCL - GPIOB10
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_10,
                        LL_GPIO_MODE_ALTERNATE);
@@ -585,7 +519,7 @@ void oled_hw_config(void)
     LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_10,
                         LL_GPIO_SPEED_FREQ_HIGH);
 
-    // SDA - GPIOB7
+    // SDA - GPIOB11
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_11,
                        LL_GPIO_MODE_ALTERNATE);
     LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_11,
@@ -594,7 +528,7 @@ void oled_hw_config(void)
     LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_11,
                         LL_GPIO_SPEED_FREQ_HIGH);
     /*
-     * Clock on the I2C peripheral and set it up
+     * Clock on the I2C2 peripheral and set it up
      */
     LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_SYSCLK);
     LL_I2C_Disable(I2C2);

@@ -2,7 +2,7 @@
 # Makefile for STM32F0 Discovery board projects
 
 OUTPATH = build
-PROJECT = $(OUTPATH)/oled_display
+PROJECT = $(OUTPATH)/game
 OPENOCD_SCRIPT_DIR ?= /usr/share/openocd/scripts
 HEAP_SIZE = 0x400
 
@@ -56,7 +56,7 @@ OPENOCD=openocd
 MCUFLAGS = -mcpu=cortex-m0 -mlittle-endian -mfloat-abi=soft -mthumb \
            -mno-unaligned-access
 
-DEBUG_OPTIMIZE_FLAGS = -O3 -ggdb -gdwarf-2 -finline-functions
+DEBUG_OPTIMIZE_FLAGS = -O2 -ggdb -gdwarf-2 -finline-functions
 
 CFLAGS = -Wall -Wextra --pedantic
 CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib \

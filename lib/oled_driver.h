@@ -52,7 +52,7 @@ void oled_putc(char ch);
 /*
  * Set current cursor
  */
-void oled_set_cursor(uint8_t x, uint8_t y);
+void oledSetCursor (uint8_t x, uint8_t y);
 
 /*
  * Print picture with a given threshold for b/w
