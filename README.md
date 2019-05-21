@@ -20,13 +20,17 @@
 <p align="center">
   <img width="600" src="https://github.com/YarOkatev/stm32game/blob/master/IMG_20190521_195828.jpg" alt="oled.jpg"/>
   <p align="center"> Рис. 1. Собранный вид <p align="center">
+    
 ---
+
 ### Прошивка
-Загрузите [game.bin](https://github.com/YarOkatev/stm32game/raw/master/build/game.bin), подключите собранную плату и выполните команду:
-```
-   st-flash write game.bin 0x08000000
-```
+  Загрузите [game.bin](https://github.com/YarOkatev/stm32game/raw/master/build/game.bin), подключите собранную плату и      выполните команду:
+  ```
+     st-flash write game.bin 0x08000000
+  ```
+  
 ---
+
 ### Благодарность 
-Лектору и менторам курса по STM32 от Студсовета ФРТК, МФТИ
-Репозиторий курса: [GitHub](https://github.com/edosedgar/stm32f0_ARM)
+  Лектору и менторам курса по STM32 от Студсовета ФРТК, МФТИ
+  Репозиторий курса: [GitHub](https://github.com/edosedgar/stm32f0_ARM)
