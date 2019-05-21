@@ -3,8 +3,8 @@
 ### Подключение дисплея 
 
 <p align="center">
-  <img width="600" src="https://github.com/edosedgar/stm32f0_ARM/wiki/oled.jpg" alt="oled.jpg"/>
-  <p align="center"> Рис. 1. Схема подключения дисплея <p align="center">
+  <img width="600" src="https://github.com/YarOkatev/stm32game/blob/master/IMG_20190521_195828.jpg" alt="oled.jpg"/>
+  <p align="center"> Рис. 1. Собранный вид <p align="center">
 
 ### Инициализация I2C
 
