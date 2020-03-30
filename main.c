@@ -2,7 +2,7 @@
 
 int main(void)
 {
-    initializeAll ();
+    initializeAll();
 
     STATE = START_SCREEN;
 

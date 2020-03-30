@@ -45,6 +45,7 @@ void drawMyCar() {
             x++;
         oledSetPix (myCar.x + x, myCar.y + (y % PIC_WIDTH), myCar.tex[y] < 120);
     }
+    return;
 }
 
 void drawCar (volatile PixModel* model) {
@@ -56,6 +57,7 @@ void drawCar (volatile PixModel* model) {
         if (x >= 0)
             oledSetPix (x, model->y + model->tex[i].y, clWhite);
     }
+    return;
 }
 
 /*
@@ -84,6 +86,7 @@ void initModels() {
     myCar.x = 95;
     myCar.y = 25;
     myCar.tex = myCarTex;
+    return;
 }
 
 void game() {
@@ -119,6 +122,7 @@ void game() {
         drawMyCar();
         oledUpdate();
     }
+    return;
 }
 
 void pauseGame() {
@@ -143,6 +147,7 @@ void pauseGame() {
             ;
     }
     STATE = GAME;
+    return;
 }
 
 void startScreen() {
@@ -160,6 +165,7 @@ void startScreen() {
     oledUpdate();
     while (STATE == START_SCREEN)
         ;
+    return;
 }
 
 void countdown() {
@@ -174,6 +180,7 @@ void countdown() {
             ;
     }
     STATE = GAME;
+    return;
 }
 
 void endGame() {
@@ -188,6 +195,7 @@ void endGame() {
     deltaY = 0;
     while (STATE == END_GAME)
         ;
+    return;
 }
 
 void buttonSound() {
@@ -198,6 +206,7 @@ void buttonSound() {
             LL_TIM_SetPrescaler(TIM2, i + x / 8);
     }
     LL_TIM_SetPrescaler(TIM2, 000);
+    return;
 }
 
 void endSound() {
@@ -208,6 +217,7 @@ void endSound() {
             LL_TIM_SetPrescaler(TIM2, i - x / 8);
     }
     LL_TIM_SetPrescaler(TIM2, 000);
+    return;
 }
 
 void countSound() {
@@ -218,6 +228,7 @@ void countSound() {
             LL_TIM_SetPrescaler(TIM2, i - x / 8);
     }
     LL_TIM_SetPrescaler(TIM2, 000);
+    return;
 }
 
 //****************************************************************************//
@@ -257,6 +268,7 @@ void exti_config(void)
     NVIC_SetPriority(EXTI0_1_IRQn, 0);
     NVIC_EnableIRQ(EXTI2_3_IRQn);
     NVIC_SetPriority(EXTI2_3_IRQn, 0);
+    return;
 }
 
 void EXTI0_1_IRQHandler(void) // Encoder Handler
@@ -290,6 +302,7 @@ void EXTI0_1_IRQHandler(void) // Encoder Handler
 
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_1);
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_0);
+    return;
 }
 
 void EXTI2_3_IRQHandler(void) { // BUTTON
@@ -297,6 +310,7 @@ void EXTI2_3_IRQHandler(void) { // BUTTON
         milliseconds = 0;
     }
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
+    return;
 }
 
 //****************************************************************************//
@@ -346,6 +360,7 @@ void SysTick_Handler() { // BUTTON Handler
             }
         }
     }
+    return;
 }
 
 void timers_config(void)
@@ -364,7 +379,7 @@ void timers_config(void)
 
 //--------------------------- SECOND TIMER ----------------------------------//
 //--------------------------- SOUND GENERATOR --------------------------------//
-// Speaker "+" on GPIOA5 
+// Speaker's "+" on GPIOA5
     LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_ALTERNATE);
     LL_GPIO_SetAFPin_0_7(GPIOA, LL_GPIO_PIN_5, LL_GPIO_AF_2);
 
@@ -379,6 +394,7 @@ void timers_config(void)
     LL_TIM_SetCounterMode(TIM2, LL_TIM_COUNTERMODE_UP);
     LL_TIM_EnableIT_CC1(TIM2);
     LL_TIM_EnableCounter(TIM2);
+    return;
 }
 
 void TIM3_IRQHandler(void) // Puts enemy's cars
@@ -436,6 +452,7 @@ void rcc_config(void)
     /* Update CMSIS variable (which can be updated also
      * through SystemCoreClockUpdate function) */
     SystemCoreClock = 48000000;
+    return;
 }
 
 void gpio_config(void)
@@ -467,4 +484,5 @@ void initializeAll() {
     timers_config();
     exti_config();
     systick_config();
+    return;
 }
