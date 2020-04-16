@@ -5,22 +5,24 @@
   - Энкодер
     - Питание -> 3V
     - A1, A0
-  - Кнопка 
+  - Кнопка
     - B2
-  - Дисплей 
+    - 3V
+  - Дисплей
     - GND -> GND
     - VCC -> 3V
     - SCL -> B10
     - SDA -> B11
   - Пьезодинамик
-    - GND
     - A5
+    - GND
+    
 #### Схема в сборе
 
 <p align="center">
   <img width="600" src="https://github.com/YarOkatev/stm32game/blob/master/IMG_20190521_195828.jpg" alt="oled.jpg"/>
   <p align="center"> Рис. 1. Собранный вид <p align="center">
-    
+
 ---
 
 ### Прошивка
@@ -28,10 +30,10 @@
   ```
      st-flash write game.bin 0x08000000
   ```
-  
+
 ---
 
-### Благодарность 
+### Благодарность
   Лектору и менторам курса по STM32 от Студсовета ФРТК, МФТИ
-  
+
   Репозиторий курса: [GitHub](https://github.com/edosedgar/stm32f0_ARM)
